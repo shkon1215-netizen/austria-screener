@@ -196,7 +196,8 @@ re-rated: on P/B, RBI is ~2.8× its filed-year median, Strabag ~2.3×, Erste
   9 passing at least one screen
 ```
 
-Telekom Austria, RBI, VIG, Palfinger, Porr, EVN, voestalpine, Strabag, OMV.
+Telekom Austria, RBI, VIG, Palfinger, Porr, EVN, voestalpine, Strabag, OMV
+(OMV on the local run only: see Publishing).
 Browser verdict at default thresholds equals Python's: 9 / 9 / 1 / 0, and every
 per-test count (P/B < 1 6, EV < 8 8, fair 4, shareholder yield 14, carve-out 1).
 Two one-offs capped (Kontron, Bajaj Mobility), two structural gaps spared (EVN,
@@ -263,6 +264,22 @@ retry after a pause for Yahoo throttling.
 Live: https://shkon1215-netizen.github.io/austria-screener/. Unlisted -
 `noindex` plus a blanket `robots.txt` - but the repo is public, which free
 Pages requires. No screen output is committed.
+
+**Wiener Börse and Yahoo both answer GitHub's runners** - confirmed on the
+first run, 2026-11-01: about 4 minutes cold, no retry, 72 lines, 71 priced, 37
+past size, 25 past liquidity, the same names as the local run.
+
+**The first two cloud runs passed 8, not the local 9, and OMV is the whole
+difference.** Every other multiple matched. GitHub's runners got an older Yahoo
+record for OMV on both runs (EPS 4.77, book 46.4, P/E 16.0, P/B 1.64) while this
+machine got EPS 6.39, book 54.77, P/E 11.9, P/B 1.39 on four calls. OMV reported
+Q3 on 2026-10-29. The local book value equals June's equity over today's shares;
+the runners' equals no filed quarter (Dec 2025 is 50.1, Sep 2026 is 55.7), so the
+runners' record is the stale one. It costs one name and cannot add a false one.
+No repair was built: Yahoo's own quarters do not reconcile to its EPS for OMV
+(they sum to about EUR 9.6 a share), so restating from them would swap one doubt
+for another. If the two still differ after a week, suspect Yahoo serving
+different records by region, and look for the same thing after any Q results.
 
 A docs-only push does not trigger a run (`paths-ignore: **.md`); start one with
 `gh workflow run screen.yml`.
