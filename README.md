@@ -85,9 +85,9 @@ in `.info` for RBI, Telekom Austria, Verbund or VIG, so these are repaired from
 are operating companies. Holdcos are a named list.
 
 **Recurring income below the operating line.** EVN earns from associates and
-its Verbund stake every year. The one-off guard reads three filed years here,
-so that is treated as structure while Kontron's single disposal year is still
-capped.
+its Verbund stake every year. The one-off guard here treats a gap as
+structure only when it shows in two filed years, so EVN is spared while
+Kontron's single disposal year is still capped.
 
 ## Read this before acting on it
 

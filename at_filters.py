@@ -434,10 +434,11 @@ def add_cashflow_metrics(df: pd.DataFrame) -> tuple[pd.DataFrame, dict]:
 # ---------------------------------------------------------------------------
 # One-off earnings
 # ---------------------------------------------------------------------------
-def _hist_oneoff_ratio(df: pd.DataFrame, tax: float, quarters: pd.Series) -> pd.Series:
-    """Median of net profit over after-tax operating profit in the filed
-    years. High means the gap is the company's structure (a trading house's
-    equity-method income), not a one-off.
+def _hist_oneoff_years(df: pd.DataFrame, tax: float, quarters: pd.Series,
+                       threshold: float) -> pd.Series:
+    """Filed years in which net profit exceeded `threshold` times after-tax
+    operating profit. Two or more means the gap is the company's structure
+    (a trading house's equity-method income), not a one-off.
 
     Where the tested figure is four quarters, the latest filed year is
     evidence too and counts; where it is the filed year itself, that year is
@@ -446,17 +447,23 @@ def _hist_oneoff_ratio(df: pd.DataFrame, tax: float, quarters: pd.Series) -> pd.
     from associates and its Verbund stake, below Yahoo's operating line:
     1.60 in FY2024 and 1.58 in FY2025 after a windfall-year 1.09 in FY2023.
     The two years before the latest alone gave 1.34, a false flag that halved
-    its earnings. A true one-off still fires: a median of three needs the gap
-    in two of them (Kontron's 2025 disposal: 1.35, 1.19, 2.57).
+    its earnings. A true one-off still fires (Kontron's 2025 disposal: 1.35,
+    1.19, 2.57).
+
+    A count, not a median: a median skips blank years, so a company with one
+    profitable filed year let the one-off year vouch for itself, and with two
+    it was a mean that one gain could carry. The US measurement (2026-11-01)
+    found that shape in tax-credit and disposal years.
     """
     missing = pd.Series(np.nan, index=df.index)
-    rs = []
+    above = []
     for i in (1, 2, 3):
         np_ = pd.to_numeric(df.get(f"np_y{i}", missing), errors="coerce")
         op = pd.to_numeric(df.get(f"op_y{i}", missing), errors="coerce")
         r = (np_ / (op * (1 - tax))).where(op > 0)
-        rs.append(r.where(quarters) if i == 3 else r)
-    return pd.concat(rs, axis=1).median(axis=1, skipna=True)
+        r = r.where(quarters) if i == 3 else r
+        above.append(r > threshold)
+    return pd.concat(above, axis=1).sum(axis=1)
 
 
 def apply_oneoff_guard(df: pd.DataFrame, cfg: K.ScreenConfig) -> tuple[pd.DataFrame, dict]:
@@ -475,8 +482,8 @@ def apply_oneoff_guard(df: pd.DataFrame, cfg: K.ScreenConfig) -> tuple[pd.DataFr
     Not .info's operatingMargins: that is one quarter's margin, and it made
     141 flags out of 2,285 on the first run, most of them false.
 
-    It fires only where the gap is NEW: if the earlier filed years show the
-    same ratio, the earnings are the company's structure - Mitsubishi
+    It fires only where the gap is NEW: if two filed years show the same
+    ratio, the earnings are the company's structure - Mitsubishi
     Corporation's equity-method income reads 2.1 every year - and are left
     alone. Financials are exempt; a bank's "operating income" is not the
     line this test needs.
@@ -497,8 +504,7 @@ def apply_oneoff_guard(df: pd.DataFrame, cfg: K.ScreenConfig) -> tuple[pd.DataFr
     cap = op * (1 - tax)
     ratio = (ni / cap).where(cap > 0)
     ratio = ratio.where(~((op <= 0) & (ni > 0)), np.inf)
-    hist = _hist_oneoff_ratio(df, tax, quarters)
-    structural = hist > cfg.oneoff_ratio
+    structural = _hist_oneoff_years(df, tax, quarters, cfg.oneoff_ratio) >= 2
     flag = (~_fin_mask(df) & (ni > 0) & (ratio > cfg.oneoff_ratio) & ~structural
             & cfg.oneoff_guard)
     k = (cap.clip(lower=0) / ni).where(flag)

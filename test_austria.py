@@ -225,6 +225,12 @@ def check_oneoff_structural():
         # The same disposal with no quarters: the filed year is what is under
         # test, so it cannot also be its own evidence.
         row("HALF", 141.0, 71.3, (77.7, 74.5), (90.7, 98.6), (141.1, 71.3), q=False),
+        # First profitable year is a tax credit (RIGL's shape: 245 on 125).
+        # Earlier years lost money, so the one-off year is the only reading.
+        row("FRST", 245.0, 125.0, (-40.0, -30.0), (-10.0, -5.0), (245.0, 125.0)),
+        # One ordinary year (1.00) and the one-off year (2.55): a median of
+        # two is their mean, 1.78, which used to spare it.
+        row("MEAN", 245.0, 125.0, (-40.0, -30.0), (77.0, 100.0), (245.0, 125.0)),
     ])
     out, _ = FF.apply_oneoff_guard(df, cfg)
     i = out.set_index("ticker")
@@ -232,6 +238,8 @@ def check_oneoff_structural():
        "a gap in two of the last three filed years is structural: EVN's P/E stands")
     ok(bool(i.loc["KTNX", "oneoff_capped"]), "a single disposal year is still capped")
     ok(bool(i.loc["HALF", "oneoff_capped"]), "a filed-year test does not vouch for itself")
+    ok(bool(i.loc["FRST", "oneoff_capped"]), "a first profitable year does not vouch for itself")
+    ok(bool(i.loc["MEAN", "oneoff_capped"]), "one gain cannot carry a two-year average")
 
 
 def check_pyramids():

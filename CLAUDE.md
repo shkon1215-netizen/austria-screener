@@ -49,7 +49,7 @@ python main_at.py --exclude-state        # drop OMV, Verbund, Post, Telekom, EVN
 | holdcos and control | France, Hong Kong | named list only: "Holding" in a name means nothing here |
 | state flag | Poland's register | a named list, since the holders are few and public |
 | pyramids, currency repair, splits, TTM flag | France, UK, Germany | none. Both pyramids and the repair find nothing today |
-| one-off guard | US | the structural test also reads the latest filed year (invariant 7) |
+| one-off guard | US | structural needs the gap in two filed years, the latest included (invariant 7) |
 
 ## Austrian invariants
 
@@ -83,17 +83,32 @@ python main_at.py --exclude-state        # drop OMV, Verbund, Post, Telekom, EVN
    Holding and Austriacard Holdings are operating companies, so no name token
    works (Hong Kong's lesson). Add to `KNOWN_HOLDCOS` rather than invent a
    heuristic. EVN is listed because of its Verbund stake.
-7. **The one-off guard's structural test reads the latest filed year when the
-   tested figure is four quarters.** This differs from the other eight
-   markets, and EVN is why: it earns from associates and its Verbund stake
-   below Yahoo's operating line, 1.60x in FY2024 and 1.58x in FY2025 after a
-   windfall 1.09x in FY2023. The earlier rule saw only the two years before
-   the latest, a median of 1.34, flagged it, doubled its P/E to 20 and dropped
-   its ROE below the floor. A median of three needs the gap in two years, so
-   Kontron's 2025 disposal (1.35, 1.19, 2.57) stays capped. Where the figure is
-   the filed year itself, that year is under test and is left out. **Worth
-   porting to the others; not done, because it would move their published
-   results.**
+7. **The one-off guard calls a gap structural only if it shows in two filed
+   years, and reads the latest filed year when the tested figure is four
+   quarters.** This differs from the other eight markets, and EVN is why: it
+   earns from associates and its Verbund stake below Yahoo's operating line,
+   1.60x in FY2024 and 1.58x in FY2025 after a windfall 1.09x in FY2023. The
+   earlier rule saw only the two years before the latest, a median of 1.34,
+   flagged it, doubled its P/E to 20 and dropped its ROE below the floor.
+   Where the figure is the filed year itself, that year is under test and is
+   left out. Kontron's 2025 disposal (1.35, 1.19, 2.57) stays capped.
+
+   **It is a count of years above 1.5, not a median** (fixed 2026-11-08). The
+   first version took `median(skipna=True)`, which is not "two years": a
+   company with one profitable filed year let the one-off year vouch for
+   itself, and with two readings the median was a mean that one gain could
+   carry. Porr was spared that way: it reports half-yearly, so FY2025 (1.53)
+   is under test, and its evidence was FY2023 3.37 and FY2024 0.94, a mean of
+   2.15. It is now capped (P/E 10.0 → 15.4, ROE 16.4 → 10.7) and still passes.
+   Porr's FY2023 operating line on Yahoo (EUR 33m) looks low, unchecked
+   against its report.
+
+   **Do not port this to the other markets.** Measured 2026-11-01 on the
+   10-30 close: it moved nothing in Germany, Poland, France, Hong Kong or the
+   UK, and in the US it released 24 capped names, 15 of them wrongly
+   (tax-credit and disposal years, checked against EDGAR). The corrected count
+   still releases a few US names wrongly, so it does not earn a port either.
+   No other market has an EVN-shaped company.
 8. **Financials = Yahoo sector "Financial Services"**; real estate is its own
    sector, so no carve-out.
 9. Germany's invariants 2, 4, 5, 7, 8, 11 and 14 hold unchanged.
@@ -201,7 +216,9 @@ Telekom Austria, RBI, VIG, Palfinger, Porr, EVN, voestalpine, Strabag, OMV
 Browser verdict at default thresholds equals Python's: 9 / 9 / 1 / 0, and every
 per-test count (P/B < 1 6, EV < 8 8, fair 4, shareholder yield 14, carve-out 1).
 Two one-offs capped (Kontron, Bajaj Mobility), two structural gaps spared (EVN,
-Porr). No foreign reporters, no pyramids.
+Porr). No foreign reporters, no pyramids. Since the guard fix of 2026-11-08,
+Porr is capped too (three capped, EVN alone spared); the 2026-11-06 close
+still gives 25 names and 9 passing, the same nine.
 
 ## Cash flow, shareholder yield and the one-off guard
 
